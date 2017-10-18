@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:utils="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/c"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util
+       http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <utils:properties id="webdriverProperties" location="settings.properties"/>
+
+    <bean id="systemProps" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" value="#{@systemProperties}"/>
+        <property name="targetMethod" value="putAll"/>
+
+        <property name="arguments" ref="webdriverProperties"/>
+
+    </bean>
+
+    <bean id="webDriverFactory" class="com.sss.testing.utils.webdriver.WDManager"/>
+    <bean id="webdriverInstance"
+          factory-bean="webDriverFactory"
+          factory-method="getWebDriverInstance"
+          destroy-method="quit" lazy-init="true"/>
+
+</beans>
