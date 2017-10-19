@@ -22,7 +22,7 @@ public enum WDType {
      */
     Firefox("firefox") {
         @Override
-        public DesiredCapabilities capabilities() {
+        public DesiredCapabilities capabilities(WDSettings wdSettings) {
             FirefoxProfile firefoxProfile = new FirefoxProfile();
             firefoxProfile.setPreference("security.warn_viewing_mixed", false);
             firefoxProfile.setPreference("security.mixed_content.block_active_content", false);
@@ -38,7 +38,7 @@ public enum WDType {
             /*
              * Set Location to store files after downloading.
              */
-            String downloadPath = WDSettings.getDownloadPath();
+            String downloadPath = wdSettings.getDownloadPath();
             firefoxProfile.setPreference("browser.download.dir", downloadPath);
             firefoxProfile.setPreference("browser.download.folderList", 2);
 
@@ -70,12 +70,12 @@ public enum WDType {
      */
     Chrome("chrome") {
         @Override
-        public DesiredCapabilities capabilities() {
+        public DesiredCapabilities capabilities(WDSettings wdSettings) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments(String.format("--lang=%s", WDSettings.getLanguageSettings()));
+            options.addArguments(String.format("--lang=%s", wdSettings.getLanguageSettings()));
             options.addArguments("--start-maximized");
 
-            String downloadPath = WDSettings.getDownloadPath();
+            String downloadPath = wdSettings.getDownloadPath();
             HashMap<String, Object> chromePrefs = new HashMap<>();
             chromePrefs.put("profile.default_content_settings.popups", 0);
             chromePrefs.put("download.default_directory", downloadPath);
@@ -102,7 +102,7 @@ public enum WDType {
      */
     Opera("opera") {
         @Override
-        public DesiredCapabilities capabilities() {
+        public DesiredCapabilities capabilities(WDSettings wdSettings) {
             DesiredCapabilities capabilities = DesiredCapabilities.operaBlink();
             capabilities.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
             return capabilities;
@@ -133,7 +133,7 @@ public enum WDType {
     /**
      * @return capabilities
      */
-    public abstract DesiredCapabilities capabilities();
+    public abstract DesiredCapabilities capabilities(WDSettings wdSettings);
 
     /**
      * @param browserType browser type

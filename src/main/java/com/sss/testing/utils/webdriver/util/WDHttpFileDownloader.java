@@ -20,23 +20,28 @@ import java.util.Set;
  * Downloader for Selenium Grid node via HTTP.
  */
 public class WDHttpFileDownloader {
+    private WDSettings wdSettings;
+
+    public WDHttpFileDownloader(WDSettings wdSettings) {
+        this.wdSettings = wdSettings;
+    }
 
     /**
      * Path to folder via HTTP, where save files on nodes
      * <p>Example: <code>http://grid.selenium:30080/saved_file_folder/</code>
      */
-    private static String rootUrl() {
-        return WDSettings.getHostGrid() + ":" + WDSettings.getHostGridHttpFolderPort()
-                + WDSettings.getDownloadPathLinuxTarget() + "/";
+    private String rootUrl() {
+        return wdSettings.getHostGrid() + ":" + wdSettings.getHostGridPort()
+                + wdSettings.getDownloadPathLinuxTarget() + "/";
     }
 
     /**
      * Обращается к папке для скачивания (<code>rootUrl</code>) по HTTP, вычитывает список файлов из неё.
      *
-     * @return Полный список файлов из папки. <code>key</code> - имя файла, <code>value</code> - href
+     * @return files list from folder <code>key</code> - file name, <code>value</code> - href
      * @throws IOException exception
      */
-    public static Map<String, String> getFileList() throws IOException {
+    public Map<String, String> getFileList() throws IOException {
         Document doc = null;
 
         /* max attempts of save file from grid */
@@ -77,7 +82,7 @@ public class WDHttpFileDownloader {
      * @return Разница между списками (новые файлы). Если список пустой, то size() == 0.
      * <code>key</code> - имя файла, <code>value</code> - href не абсолютный.
      */
-    public static Map<String, String> getNewFileUrls(Map<String, String> filesBefore, Map<String, String> filesAfter) {
+    public Map<String, String> getNewFileUrls(Map<String, String> filesBefore, Map<String, String> filesAfter) {
         Set<String> namesBefore = filesBefore.keySet();
         Set<String> namesAfter = filesAfter.keySet();
         namesAfter.removeIf(namesBefore::contains);
@@ -116,7 +121,7 @@ public class WDHttpFileDownloader {
      * <p>Если за указанный промежуток времени файлы не были скачены - список будет пустой.
      * @throws IOException On error
      */
-    public static Map<String, String> waitForDownloading(Map<String, String> filesBefore, long timeoutInMilliseconds) throws IOException {
+    public Map<String, String> waitForDownloading(Map<String, String> filesBefore, long timeoutInMilliseconds) throws IOException {
         Map<String, String> newFileUrls;
         StopWatch sw = new StopWatch();
         sw.start();
@@ -140,7 +145,7 @@ public class WDHttpFileDownloader {
      * <p>Если за указанный промежуток времени файлы не были скачены - список будет пустой.
      * @throws IOException On error
      */
-    public static Map<String, String> waitForDownloading(Map<String, String> filesBefore) throws IOException {
+    public Map<String, String> waitForDownloading(Map<String, String> filesBefore) throws IOException {
         return waitForDownloading(filesBefore, Configuration.timeout);
     }
 
@@ -156,14 +161,14 @@ public class WDHttpFileDownloader {
      *                     <p> if destination needs creating but can't be,
      *                     <p> if an IO error occurs during copying
      */
-    public static Map<Path, String> copyToLocal(Map<String, String> newFileUrls) throws IOException {
+    public Map<Path, String> copyToLocal(Map<String, String> newFileUrls) throws IOException {
         Map<Path, String> copied = new HashMap<>();
 
         /* Для всего списка ... */
         newFileUrls.forEach((name, url) -> {
             /* ... делается формирование локального пути куда будет скопирован текущий файл */
             Path path = Paths.get(System.getProperty("user.dir"))
-                    .resolve(WDSettings.getDownloadPathLocal())
+                    .resolve(wdSettings.getDownloadPathLocal())
                     .resolve(name);
             copied.put(path, url);
         });
@@ -212,7 +217,7 @@ public class WDHttpFileDownloader {
      *                     <p> if destination needs creating but can't be,
      *                     <p> if an IO error occurs during copying
      */
-    public static Map<Path, String> waitForAndCopy(Map<String, String> filesBefore) throws IOException {
+    public Map<Path, String> waitForAndCopy(Map<String, String> filesBefore) throws IOException {
         return copyToLocal(waitForDownloading(filesBefore));
     }
 
@@ -222,7 +227,7 @@ public class WDHttpFileDownloader {
      * @param newFileUrls Список для фильтрации.
      * @return Отфильтрованный список.
      */
-    private static Map<String, String> filter(Map<String, String> newFileUrls) {
+    private Map<String, String> filter(Map<String, String> newFileUrls) {
         Map<String, String> filtered = new HashMap<>();
         newFileUrls.forEach((name, href) -> {
             if (!name.endsWith(".crdownload") && !name.endsWith(".tmp")) {

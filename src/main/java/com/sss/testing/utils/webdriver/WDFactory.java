@@ -47,28 +47,29 @@ public class WDFactory {
      *
      * @return Webdriver
      */
-    public WebDriver createWebDriver(String browser) {
+    public WebDriver createWebDriver(WDSettings wdSettings) {
         WebDriver driver;
+        String browser = wdSettings.getBrowser();
         switch (browser) {
             case BrowserTypes.CHROME:
                 prepareChromeExe();
-                driver = new ChromeDriver(WDType.forBrowserType(BrowserTypes.CHROME).capabilities());
+                driver = new ChromeDriver(WDType.forBrowserType(BrowserTypes.CHROME).capabilities(wdSettings));
                 break;
 
             case BrowserTypes.FIREFOX:
             case BrowserTypes.FF:
                 prepareFirefoxExe();
-                driver = new FirefoxDriver(WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities());
+                driver = new FirefoxDriver(WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities(wdSettings));
                 break;
 
             case BrowserTypes.INTERNET_EXPLORER:
                 prepareIEExe();
-                driver = new InternetExplorerDriver(WDType.forBrowserType(BrowserTypes.INTERNET_EXPLORER).capabilities());
+                driver = new InternetExplorerDriver(WDType.forBrowserType(BrowserTypes.INTERNET_EXPLORER).capabilities(wdSettings));
                 break;
 
             case BrowserTypes.OPERA:
                 prepareOperaExe();
-                driver = new OperaDriver(WDType.forBrowserType(BrowserTypes.OPERA).capabilities());
+                driver = new OperaDriver(WDType.forBrowserType(BrowserTypes.OPERA).capabilities(wdSettings));
                 break;
 
             default:
@@ -81,21 +82,54 @@ public class WDFactory {
     }
 
     /**
+     * Prepares a RemoteWebDriver - tests will be ran on the Selenium Grid.
+     *
+     * @return RemoteWebDriver
+     */
+    public WebDriver createRemoteWebDriver(WDSettings wdSettings) {
+        String browser = wdSettings.getBrowser();
+        try {
+            DesiredCapabilities capabilities;
+            switch (browser) {
+                case CHROME:
+                    capabilities = WDType.forBrowserType(CHROME).capabilities(wdSettings);
+                    break;
+                case FIREFOX:
+                    capabilities = WDType.forBrowserType(FIREFOX).capabilities(wdSettings);
+                    break;
+                case OPERA:
+                    capabilities = WDType.forBrowserType(OPERA).capabilities(wdSettings);
+                    break;
+                default:
+                    throw new NotImplementedException("No desired capabilities for remote browser: " + browser);
+            }
+
+            if (testName != null) {
+                capabilities.setCapability("name", testName);
+            }
+            return new RemoteWebDriver(new URL(wdSettings.getHostGrid()), capabilities);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid 'remote' parameter: " + remote, e);
+        }
+    }
+
+    /**
      * Runs the specified WebDriver in the specified runtime mode.
      *
-     * @param browser     a browser for running.
+     * @param wdSettings  a browser for running.
      *                    For local host - a type browser is being got from .properties file.
      *                    For remote (Selenium Grid) - the type browser is being got from mvn command line
      *                    (For example: <code>-Dbrowser=firefox</code>)
      * @param runtimeMode Specified runtime mode.
      */
-    public void createCustomizedSelenide(String browser, String runtimeMode) {
+    public void createCustomizedSelenide(WDSettings wdSettings, String runtimeMode) {
         if ((remote != null) && (!remote.isEmpty())) {
-            WebDriverRunner.setWebDriver(this.createRemoteSelenideWebDriver(browser));
+            WebDriverRunner.setWebDriver(this.createRemoteSelenideWebDriver(wdSettings));
             WebDriverRunner.getWebDriver().manage().window().maximize();
             return;
         }
 
+        String browser = wdSettings.getBrowser();
         /*
          * Do NOT DELETE this assignment!
          * Otherwise when try to read a value of the 'Configuration.browser' - the value may not be an actual browser.
@@ -111,7 +145,7 @@ public class WDFactory {
                 prepareChromeExe();
                 setWebDriver(
                         new ChromeDriver(
-                                WDType.forBrowserType(BrowserTypes.CHROME).capabilities()
+                                WDType.forBrowserType(BrowserTypes.CHROME).capabilities(wdSettings)
                         )
                 );
                 break;
@@ -121,7 +155,7 @@ public class WDFactory {
                 prepareFirefoxExe();
                 setWebDriver(
                         new FirefoxDriver(
-                                WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities()
+                                WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities(wdSettings)
                         )
                 );
                 break;
@@ -135,7 +169,7 @@ public class WDFactory {
                 prepareOperaExe();
                 setWebDriver(
                         new OperaDriver(
-                                WDType.forBrowserType(BrowserTypes.OPERA).capabilities()
+                                WDType.forBrowserType(BrowserTypes.OPERA).capabilities(wdSettings)
                         )
                 );
                 break;
@@ -158,34 +192,35 @@ public class WDFactory {
     /**
      * Runs the specified WebDriver in the specified runtime mode.
      *
-     * @param browser     a browser for running.
+     * @param wdSettings  a browser for running.
      *                    For local host - a type browser is being got from .properties file.
      *                    For remote (Selenium Grid) - the type browser is being got from mvn command line
      *                    (For example: <code>-Dbrowser=firefox</code>)
      * @param runtimeMode Specified runtime mode.
      * @param tstName     Имя теста, будет отображаться на dashboard-е Zalenium.
      */
-    public void createCustomizedSelenide(String browser, String runtimeMode, String tstName) {
+    public void createCustomizedSelenide(WDSettings wdSettings, String runtimeMode, String tstName) {
         this.testName = tstName;
-        createCustomizedSelenide(browser, runtimeMode);
+        createCustomizedSelenide(wdSettings, runtimeMode);
     }
 
     /**
      * Runs the specified WebDriver in the specified runtime mode.
      *
-     * @param browser     a browser for running.
+     * @param wdSettings     a browser for running.
      *                    For local host - a type browser is being got from .properties file.
      *                    For remote (Selenium Grid) - the type browser is being got from mvn command line
      *                    (For example: <code>-Dbrowser=firefox</code>)
      * @param runtimeMode Specified runtime mode.
      */
-    public void createNativeSelenide(String browser, String runtimeMode) {
+    public void createNativeSelenide(WDSettings wdSettings, String runtimeMode) {
         if ((remote != null) && (!remote.isEmpty())) {
-            WebDriverRunner.setWebDriver(createRemoteSelenideWebDriver(browser));
+            WebDriverRunner.setWebDriver(createRemoteSelenideWebDriver(wdSettings));
             WebDriverRunner.getWebDriver().manage().window().maximize();
             return;
         }
 
+        String browser = wdSettings.getBrowser();
         /*
          * Do NOT DELETE this assignment!
          * Otherwise when try to read a value of the 'Configuration.browser' - the value may not be an actual browser.
@@ -229,51 +264,22 @@ public class WDFactory {
     /**
      * Runs the specified WebDriver in the specified runtime mode.
      *
-     * @param browser     a browser for running.
+     * @param wdSettings  a browser for running.
      *                    For local host - a type browser is being got from .properties file.
      *                    For remote (Selenium Grid) - the type browser is being got from mvn command line
      *                    (For example: <code>-Dbrowser=firefox</code>)
      * @param runtimeMode Specified runtime mode.
      * @param tstName     Имя теста, будет отображаться на dashboard-е Zalenium.
      */
-    public void createNativeSelenide(String browser, String runtimeMode, String tstName) {
+    public void createNativeSelenide(WDSettings wdSettings, String runtimeMode, String tstName) {
         this.testName = tstName;
-        createNativeSelenide(browser, runtimeMode);
+        createNativeSelenide(wdSettings, runtimeMode);
     }
 
-    /**
-     * Prepares a RemoteWebDriver - tests will be ran on the Selenium Grid.
-     *
-     * @return RemoteWebDriver
-     */
-    public WebDriver createRemoteWebDriver(String hubUrl, String browser) {
-        try {
-            DesiredCapabilities capabilities;
-            switch (browser) {
-                case CHROME:
-                    capabilities = WDType.forBrowserType(CHROME).capabilities();
-                    break;
-                case FIREFOX:
-                    capabilities = WDType.forBrowserType(FIREFOX).capabilities();
-                    break;
-                case OPERA:
-                    capabilities = WDType.forBrowserType(OPERA).capabilities();
-                    break;
-                default:
-                    throw new NotImplementedException("No desired capabilities for remote browser: " + browser);
-            }
 
-            if (testName != null) {
-                capabilities.setCapability("name", testName);
-            }
-            return new RemoteWebDriver(new URL(hubUrl), capabilities);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Invalid 'remote' parameter: " + remote, e);
-        }
-    }
 
-    private WebDriver createRemoteSelenideWebDriver(String browser) {
-        return createRemoteWebDriver(remote, browser);
+    private WebDriver createRemoteSelenideWebDriver(WDSettings wdSettings) {
+        return createRemoteWebDriver(wdSettings.setHostGrid(remote));
     }
 
     /**
@@ -324,7 +330,7 @@ public class WDFactory {
         String exceptionText = String.format("No GeckoDriver for architecture type '%s' of OS '%s'", osArch, osName);
         Driver driver = new Driver();
         driver.setName("geckodriver");
-        driver.setVersion("0.18.0");
+        driver.setVersion("0.19.0");
         if (osName.toLowerCase().contains("windows")) {
             driver.setPlatform("windows");
         } else if (osName.toLowerCase().contains("linux")) {

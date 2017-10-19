@@ -1,7 +1,6 @@
 package com.sss.testing.utils.webdriver.util;
 
 import com.codeborne.selenide.Configuration;
-import com.sss.testing.utils.webdriver.WDManager;
 import org.apache.commons.lang3.time.StopWatch;
 import com.sss.testing.utils.webdriver.WDSettings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,15 +22,13 @@ import java.util.Map;
 public class WDFileDownloader {
 
     @Autowired
-    @Qualifier("webDriverFactory")
-    private WDManager wdFactory;
+    @Qualifier("wdSettings")
+    private WDSettings wdSettings;
 
     private static boolean isRemoteRun;
 
     private WDFileDownloader() {
-//        hide constructor
         isRemoteRun = false;
-//        isRemoteRun = wdFactory.isRemoteRun();
     }
 
     /**
@@ -39,8 +36,8 @@ public class WDFileDownloader {
      *
      * @throws IOException If an I/O error occurs
      */
-    public static void cleanDownloadFolder() throws IOException {
-        File downloadFolder = new File(WDSettings.getDownloadPath());
+    public void cleanDownloadFolder() throws IOException {
+        File downloadFolder = new File(wdSettings.getDownloadPath());
         String[] list = downloadFolder.list();
         if (list == null) return;
         for (String folderItem : list) {
@@ -55,9 +52,9 @@ public class WDFileDownloader {
      * @param timeoutInMilliseconds timeout
      * @return absolute path to downloaded file. <p> null - file was not found.
      */
-    public static Path waitForFirstDownloadedFile(long timeoutInMilliseconds) {
+    public Path waitForFirstDownloadedFile(long timeoutInMilliseconds) {
         StopWatch sw = new StopWatch();
-        File downloadFolder = new File(WDSettings.getDownloadPath());
+        File downloadFolder = new File(wdSettings.getDownloadPath());
         String[] list;
         List<String> allFiles = new ArrayList<>();
         List<String> files = new ArrayList<>();
@@ -89,7 +86,7 @@ public class WDFileDownloader {
      *
      * @return Absolute path to downloaded file. <p> null - file wasn't found.
      */
-    public static Path waitForFirstDownloadedFile() {
+    public Path waitForFirstDownloadedFile() {
         return waitForFirstDownloadedFile(10_000);
     }
 
@@ -102,14 +99,14 @@ public class WDFileDownloader {
      * <code>null</code> - folder is clean, without files
      * @throws IOException If an I/O error occurs
      */
-    public static Map<String, String> cleanOrRemember() throws IOException {
+    public Map<String, String> cleanOrRemember() throws IOException {
         /* local run */
         if (Configuration.remote == null || !isRemoteRun) {
             cleanDownloadFolder();
             return null;
         /* Selenium Grid */
         } else {
-            return WDHttpFileDownloader.getFileList();
+            return new WDHttpFileDownloader(wdSettings).getFileList();
         }
     }
 }
