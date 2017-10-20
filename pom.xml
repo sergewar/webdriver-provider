@@ -10,7 +10,7 @@
         <selenium.version>3.6.0</selenium.version>
         <selenium.htmlunit.driver.version>2.26</selenium.htmlunit.driver.version>
         <selenide.version>4.8</selenide.version>
-        <logging-deps.version>1.29</logging-deps.version>
+        <logging-deps.version>1.0</logging-deps.version>
         <guava.version>23.0</guava.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,8 +23,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>ru.russianpost.qa.utils</groupId>
-            <artifactId>logging-dependencies</artifactId>
+            <groupId>com.sss.utils</groupId>
+            <artifactId>logging-bill</artifactId>
             <version>${logging-deps.version}</version>
             <type>pom</type>
         </dependency>
