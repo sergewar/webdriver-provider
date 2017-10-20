@@ -111,4 +111,16 @@ public final class WDSettings {
 //        return System.getProperty("language");
     }
 
+    @Override
+    public String toString() {
+        return "WDSettings{\n" +
+                "language='" + language + '\'' +
+                ", \nbrowser='" + browser + '\'' +
+                ", \ndownloadPathLocal='" + downloadPathLocal + '\'' +
+                ", \ndownloadPathLinux='" + downloadPathLinux + '\'' +
+                ", \ndownloadPathLinuxTarget='" + downloadPathLinuxTarget + '\'' +
+                ", \nhostGrid='" + hostGrid + '\'' +
+                ", \nhostGridPort='" + hostGridPort + '\'' +
+                '}';
+    }
 }
