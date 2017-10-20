@@ -16,6 +16,8 @@ import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.openqa.selenium.remote.BrowserType.CHROME;
+import static org.openqa.selenium.remote.BrowserType.FIREFOX;
 
 /**
  * Test webdriver initialize
@@ -23,7 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @ContextConfiguration(locations = {"classpath*:test-webdriver-context.xml"})
 @DirtiesContext
 public class TestSelenideWebdriverInitialize extends AbstractTestNGSpringContextTests {
-
 
     @Autowired
     @Qualifier("wdSettings")
@@ -37,49 +38,59 @@ public class TestSelenideWebdriverInitialize extends AbstractTestNGSpringContext
         );
     }
 
+    /**
+     * run selenide with chrome with customized profile
+     *
+     * @throws Exception
+     */
     @Test
-    public void test_Preparing_Chrome_Customized() throws Exception {
+    public void testDefaultRunChromeCustomizedProfile() throws Exception {
         WDFactory wdFactory = new WDFactory();
-        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(BrowserTypes.CHROME), RuntimeModes.RUN);
+        wdFactory.createCustomizedSelenide(wdSettings, RuntimeModes.RUN);
         Selenide.open("https://www.google.ru/");
         Selenide.close();
         WebDriverRunner.closeWebDriver();
     }
 
     @Test
-    public void test_BrowserNameChrome_in_Configuration() throws Exception {
+    public void testCustomizesBrowserNameRunFirefoxCustomizedProfile() throws Exception {
         WDFactory wdFactory = new WDFactory();
-        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(BrowserTypes.CHROME), RuntimeModes.RUN);
-        assertThat("Invalid browser name, should be " + BrowserType.CHROME + " but actual " + Configuration.browser,
-                Configuration.browser, is(BrowserType.CHROME));
-        WebDriverRunner.closeWebDriver();
-    }
-
-    @Test
-    public void test_BrowserNameFirefox_in_Configuration() throws Exception {
-        WDFactory wdFactory = new WDFactory();
-        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(BrowserTypes.FIREFOX), RuntimeModes.RUN);
+        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(FIREFOX), RuntimeModes.RUN);
         assertThat("Invalid browser name, should be " + BrowserType.FIREFOX + " but actual " + Configuration.browser,
                 Configuration.browser, is(BrowserType.FIREFOX));
-        WebDriverRunner.closeWebDriver();
-    }
-
-    @Test
-    public void test_Preparing_Chrome_Native() throws Exception {
-        WDFactory wdFactory = new WDFactory();
-        wdFactory.createNativeSelenide(wdSettings.setBrowser(BrowserTypes.CHROME), RuntimeModes.RUN);
         Selenide.open("https://www.google.ru/");
         Selenide.close();
         WebDriverRunner.closeWebDriver();
     }
 
     @Test
-    public void test_Preparing_Firefox_Customized() throws Exception {
+    public void testCustomizesBrowserNameRunChromeCustomizedProfile() throws Exception {
         WDFactory wdFactory = new WDFactory();
-        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(BrowserTypes.FIREFOX), RuntimeModes.RUN);
+        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(CHROME), RuntimeModes.RUN);
+        assertThat("Invalid browser name, should be " + BrowserType.CHROME + " but actual " + Configuration.browser,
+                Configuration.browser, is(BrowserType.CHROME));
         Selenide.open("https://www.google.ru/");
         Selenide.close();
         WebDriverRunner.closeWebDriver();
     }
+
+    @Test
+    public void testCustomizesBrowserNameRunFirefoxDefaultProfile() throws Exception {
+        WDFactory wdFactory = new WDFactory();
+        wdFactory.createCustomizedSelenide(wdSettings.setBrowser(FIREFOX), RuntimeModes.RUN);
+        Selenide.open("https://www.google.ru/");
+        Selenide.close();
+        WebDriverRunner.closeWebDriver();
+    }
+
+    @Test
+    public void testCustomizesBrowserNameRunChromeDefaultProfile() throws Exception {
+        WDFactory wdFactory = new WDFactory();
+        wdFactory.createNativeSelenide(wdSettings.setBrowser(CHROME), RuntimeModes.RUN);
+        Selenide.open("https://www.google.ru/");
+        Selenide.close();
+        WebDriverRunner.closeWebDriver();
+    }
+
 
 }
