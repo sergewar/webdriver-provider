@@ -9,12 +9,11 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.opera.OperaDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,37 +42,23 @@ public class WDFactory {
     }
 
     /**
-     * Run FF by default
-     *
      * @return Webdriver
      */
     public WebDriver createWebDriver(WDSettings wdSettings) {
         WebDriver driver;
-        String browser = wdSettings.getBrowser();
-        switch (browser) {
-            case BrowserTypes.CHROME:
-                prepareChromeExe();
-                driver = new ChromeDriver(WDType.forBrowserType(BrowserTypes.CHROME).capabilities(wdSettings));
+        prepareDriverExe(wdSettings);
+        switch (wdSettings.getBrowser()) {
+            case CHROME:
+                driver = new ChromeDriver(getCapabilities(wdSettings));
                 break;
-
-            case BrowserTypes.FIREFOX:
-            case BrowserTypes.FF:
-                prepareFirefoxExe();
-                driver = new FirefoxDriver(WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities(wdSettings));
+            case FIREFOX:
+                driver = new FirefoxDriver(getCapabilities(wdSettings));
                 break;
-
-            case BrowserTypes.INTERNET_EXPLORER:
-                prepareIEExe();
-                driver = new InternetExplorerDriver(WDType.forBrowserType(BrowserTypes.INTERNET_EXPLORER).capabilities(wdSettings));
+            case OPERA:
+                driver = new OperaDriver(getCapabilities(wdSettings));
                 break;
-
-            case BrowserTypes.OPERA:
-                prepareOperaExe();
-                driver = new OperaDriver(WDType.forBrowserType(BrowserTypes.OPERA).capabilities(wdSettings));
-                break;
-
             default:
-                throw new IllegalArgumentException(String.format("Unknown selected browser: '%s'", browser));
+                throw new IllegalArgumentException(String.format("Unknown selected browser: '%s'", wdSettings.getBrowser()));
         }
 
         checkNotNull(driver, "Browser driver is null");
@@ -87,29 +72,18 @@ public class WDFactory {
      * @return RemoteWebDriver
      */
     public WebDriver createRemoteWebDriver(WDSettings wdSettings) {
-        String browser = wdSettings.getBrowser();
         try {
-            DesiredCapabilities capabilities;
-            switch (browser) {
-                case CHROME:
-                    capabilities = WDType.forBrowserType(CHROME).capabilities(wdSettings);
-                    break;
-                case FIREFOX:
-                    capabilities = WDType.forBrowserType(FIREFOX).capabilities(wdSettings);
-                    break;
-                case OPERA:
-                    capabilities = WDType.forBrowserType(OPERA).capabilities(wdSettings);
-                    break;
-                default:
-                    throw new NotImplementedException("No desired capabilities for remote browser: " + browser);
-            }
+            DesiredCapabilities capabilities = getCapabilities(wdSettings);
 
             if (testName != null) {
                 capabilities.setCapability("name", testName);
             }
-            return new RemoteWebDriver(new URL(wdSettings.getHostGrid()), capabilities);
+            WebDriver driver = new RemoteWebDriver(new URL(wdSettings.getHostGrid()), capabilities);
+            checkNotNull(driver, "Browser driver is null");
+            driver.getTitle();
+            return driver;
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Invalid 'remote' parameter: " + remote, e);
+            throw new IllegalArgumentException("Invalid 'remote' parameter: " + wdSettings.getHostGrid(), e);
         }
     }
 
@@ -141,49 +115,28 @@ public class WDFactory {
          * Settings will be get from the .properties-file(s).
          */
         switch (browser) {
-            case BrowserTypes.CHROME:
+            case CHROME:
                 prepareChromeExe();
-                setWebDriver(
-                        new ChromeDriver(
-                                WDType.forBrowserType(BrowserTypes.CHROME).capabilities(wdSettings)
-                        )
-                );
+                setWebDriver(new ChromeDriver(getCapabilities(wdSettings)));
                 break;
-
-            case BrowserTypes.FIREFOX:
-            case BrowserTypes.FF:
+            case FIREFOX:
                 prepareFirefoxExe();
-                setWebDriver(
-                        new FirefoxDriver(
-                                WDType.forBrowserType(BrowserTypes.FIREFOX).capabilities(wdSettings)
-                        )
-                );
+                setWebDriver(new FirefoxDriver(getCapabilities(wdSettings)));
                 break;
-
-            case BrowserTypes.INTERNET_EXPLORER:
-                prepareIEExe();
-                setWebDriver(new InternetExplorerDriver());
-                break;
-
-            case BrowserTypes.OPERA:
+            case OPERA:
                 prepareOperaExe();
-                setWebDriver(
-                        new OperaDriver(
-                                WDType.forBrowserType(BrowserTypes.OPERA).capabilities(wdSettings)
-                        )
-                );
+                setWebDriver(new OperaDriver(getCapabilities(wdSettings)));
                 break;
-
             default:
                 throw new IllegalArgumentException(String.format("Unknown selected browser: '%s'", browser));
         }
 
-        if (RuntimeModes.DEBUG.equals(runtimeMode)) {
+        if (RuntimeModes.DEBUG.equalsIgnoreCase(runtimeMode)) {
             java.awt.Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
             WebDriverRunner.getWebDriver().manage().window().setPosition(new Point((int) (screenSize.getWidth() / 2), 1));
         } else {
             // TODO: Delete the condition after released of the Firefox 55. see issue: https://github.com/mozilla/geckodriver/issues/820
-            if (!browser.equals(BrowserTypes.FIREFOX)) {
+            if (!browser.equals(FIREFOX)) {
                 WebDriverRunner.getWebDriver().manage().window().maximize();
             }
         }
@@ -207,7 +160,7 @@ public class WDFactory {
     /**
      * Runs the specified WebDriver in the specified runtime mode.
      *
-     * @param wdSettings     a browser for running.
+     * @param wdSettings  a browser for running.
      *                    For local host - a type browser is being got from .properties file.
      *                    For remote (Selenium Grid) - the type browser is being got from mvn command line
      *                    (For example: <code>-Dbrowser=firefox</code>)
@@ -220,38 +173,14 @@ public class WDFactory {
             return;
         }
 
-        String browser = wdSettings.getBrowser();
         /*
          * Do NOT DELETE this assignment!
          * Otherwise when try to read a value of the 'Configuration.browser' - the value may not be an actual browser.
          */
+        String browser = wdSettings.getBrowser();
         Configuration.browser = browser;
 
-        /*
-        Prepare WebDriver in the case if tests are being ran locally.
-        Settings will be get from the .properties-file(s).
-         */
-        switch (browser) {
-            case BrowserTypes.CHROME:
-                prepareChromeExe();
-                break;
-
-            case BrowserTypes.FIREFOX:
-            case BrowserTypes.FF:
-                prepareFirefoxExe();
-                break;
-
-            case BrowserTypes.INTERNET_EXPLORER:
-                prepareIEExe();
-                break;
-
-            case BrowserTypes.OPERA:
-                prepareOperaExe();
-                break;
-
-            default:
-                throw new IllegalArgumentException(String.format("Unknown selected browser: '%s'", browser));
-        }
+        prepareDriverExe(wdSettings);
 
         if (RuntimeModes.DEBUG.equals(runtimeMode)) {
             java.awt.Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -276,10 +205,52 @@ public class WDFactory {
         createNativeSelenide(wdSettings, runtimeMode);
     }
 
-
-
     private WebDriver createRemoteSelenideWebDriver(WDSettings wdSettings) {
         return createRemoteWebDriver(wdSettings.setHostGrid(remote));
+    }
+
+    /**
+     * return capability by webdriver setting
+     *
+     * @param wdSettings webdriver settings
+     * @return capabilities
+     */
+    private DesiredCapabilities getCapabilities(WDSettings wdSettings) {
+        String browser = wdSettings.getBrowser();
+        DesiredCapabilities capabilities;
+        switch (browser) {
+            case CHROME:
+                capabilities = WDType.forBrowserType(CHROME).capabilities(wdSettings);
+                break;
+            case FIREFOX:
+                capabilities = WDType.forBrowserType(FIREFOX).capabilities(wdSettings);
+                break;
+            case OPERA:
+                capabilities = WDType.forBrowserType(OPERA).capabilities(wdSettings);
+                break;
+            default:
+                throw new NotImplementedException("No desired capabilities for remote browser: " + browser);
+        }
+        return capabilities;
+    }
+
+    /**
+     * Prepare executable WebDriver
+     */
+    private static void prepareDriverExe(WDSettings wdSettings) {
+        switch (wdSettings.getBrowser()) {
+            case CHROME:
+                prepareChromeExe();
+                break;
+            case FIREFOX:
+                prepareFirefoxExe();
+                break;
+            case OPERA:
+                prepareOperaExe();
+                break;
+            default:
+                throw new IllegalArgumentException(String.format("Unknown selected browser: '%s'", wdSettings.getBrowser()));
+        }
     }
 
     /**
