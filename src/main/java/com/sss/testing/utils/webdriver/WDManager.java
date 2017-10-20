@@ -1,5 +1,6 @@
 package com.sss.testing.utils.webdriver;
 
+import com.codeborne.selenide.WebDriverRunner;
 import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
@@ -29,7 +30,6 @@ public class WDManager {
     public WDManager(WDSettings wdSettings) {
         this.driverFactory = new WDFactory();
         this.wdSettings = wdSettings;
-//        this.driverType = WDType.forBrowserType(wdSettings.getBrowser());
     }
 
     /**
@@ -74,5 +74,21 @@ public class WDManager {
 
     public boolean isRemoteRun() {
         return !"".equals(wdSettings.getHostGrid());
+    }
+
+    public WebDriver initializeSelenideCustomized() {
+        String runtimeMode = System.getProperty("runtimeMode", "run");
+        driverFactory.createCustomizedSelenide(wdSettings, runtimeMode);
+        return WebDriverRunner.getWebDriver();
+    }
+
+    public WebDriver initializeSelenideNative() {
+        String runtimeMode = System.getProperty("runtimeMode", "run");
+        driverFactory.createNativeSelenide(wdSettings, runtimeMode);
+        return WebDriverRunner.getWebDriver();
+    }
+
+    public void destroySelenide() {
+        WebDriverRunner.closeWebDriver();
     }
 }
