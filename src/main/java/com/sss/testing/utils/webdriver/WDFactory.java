@@ -5,6 +5,7 @@ import com.codeborne.selenide.WebDriverRunner;
 import com.sss.testing.utils.webdriversinstaller.Driver;
 import com.sss.testing.utils.webdriversinstaller.InstallWebDrivers;
 import org.apache.commons.lang3.NotImplementedException;
+import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -12,6 +13,9 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.opera.OperaDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.events.EventFiringWebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Toolkit;
 import java.io.File;
@@ -31,7 +35,7 @@ import static org.openqa.selenium.remote.BrowserType.OPERA;
  * Created by sshtubey on 22/02/2017.
  */
 public class WDFactory {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(WDFactory.class);
     private String testName = null;
 
     /**
@@ -103,6 +107,7 @@ public class WDFactory {
             return;
         }
 
+        LOGGER.info("customized\n" + wdSettings.toString());
         String browser = wdSettings.getBrowser();
         /*
          * Do NOT DELETE this assignment!
@@ -140,6 +145,13 @@ public class WDFactory {
                 WebDriverRunner.getWebDriver().manage().window().maximize();
             }
         }
+
+        try {
+            LOGGER.debug("Driver capabilities: " + ((HasCapabilities) ((EventFiringWebDriver) WebDriverRunner.getWebDriver())
+                    .getWrappedDriver()).getCapabilities());
+        } catch (ClassCastException e) {
+            LOGGER.debug("Driver capabilities: " + ((HasCapabilities) WebDriverRunner.getWebDriver()).getCapabilities());
+        }
     }
 
     /**
@@ -172,7 +184,7 @@ public class WDFactory {
             WebDriverRunner.getWebDriver().manage().window().maximize();
             return;
         }
-
+        LOGGER.info("native\n" + wdSettings.toString());
         /*
          * Do NOT DELETE this assignment!
          * Otherwise when try to read a value of the 'Configuration.browser' - the value may not be an actual browser.
